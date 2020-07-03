@@ -1,45 +1,54 @@
 const Koa = require('koa')
+const views = require('koa-views')
 const path = require('path')
-const app = new Koa()
-// const bodyParser = require('koa-bodyparser')
-
+const convert = require('koa-convert')
+const static = require('koa-static')
 const { uploadFile } = require('./util/upload')
 
-// app.use(bodyParser())
+const app = new Koa()
+
+/**
+ * 使用第三方中间件 start 
+ */
+app.use(views(path.join(__dirname, './view'), {
+  extension: 'ejs'
+}))
+
+// 静态资源目录对于相对入口文件index.js的路径
+const staticPath = './static'
+// 由于koa-static目前不支持koa2
+// 所以只能用koa-convert封装一下
+app.use(convert(static(
+  path.join( __dirname,  staticPath)
+)))
+/**
+ * 使用第三方中间件 end 
+ */
 
 app.use( async ( ctx ) => {
-
-  if ( ctx.url === '/' && ctx.method === 'GET' ) {
-    // 当GET请求时候返回表单页面
-    let html = `
-      <h1>koa2 upload demo</h1>
-      <form method="POST" action="/upload.json" enctype="multipart/form-data">
-        <p>file upload</p>
-        <span>picName:</span><input name="picName" type="text" /><br/>
-        <input name="file" type="file" /><br/><br/>
-        <button type="submit">submit</button>
-      </form>
-    `
-    ctx.body = html
-
-  } else if ( ctx.url === '/upload.json' && ctx.method === 'POST' ) {
+  if ( ctx.method === 'GET' ) {
+    let title = 'upload pic async'
+    await ctx.render('index', {
+      title,
+    })
+  } else if ( ctx.url === '/api/picture/upload.json' && ctx.method === 'POST' ) {
     // 上传文件请求处理
     let result = { success: false }
-    let serverFilePath = path.join( __dirname, 'upload-files' )
+    let serverFilePath = path.join( __dirname, 'static/image' )
 
     // 上传文件事件
     result = await uploadFile( ctx, {
-      fileType: 'album', // common or album
+      fileType: 'album',
       path: serverFilePath
     })
-
     ctx.body = result
   } else {
     // 其他请求显示404
     ctx.body = '<h1>404！！！ o(╯□╰)o</h1>'
   }
+
 })
 
 app.listen(3001, () => {
-  console.log('[demo] upload-simple is starting at port 3001')
+  console.log('[demo] upload-pic-async is starting at port 3001')
 })
