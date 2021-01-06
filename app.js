@@ -4,7 +4,7 @@ const static = require('koa-static')
 
 const app = new koa();
 
-const staticPath = './static'
+const staticPath = './dist'
 
 app.use(static(path.join(__dirname, staticPath)))
 
